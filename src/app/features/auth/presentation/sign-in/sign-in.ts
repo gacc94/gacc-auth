@@ -34,12 +34,11 @@ const GOOGLE_SVG = `
                         </button>
                     </div>
                 </form>
-                <pre><code>{{ store.user() | json }}</code></pre>
             </section>
         </main>
     `,
     styleUrl: './sign-in.scss',
-    providers: [AuthStore],
+    // providers: [AuthStore],
 })
 export default class SignIn {
     readonly #iconRegistry = inject(MatIconRegistry);
@@ -64,7 +63,6 @@ export default class SignIn {
     }
 
     ngOnInit() {
-        console.log('ngOnInit');
         // this.store.signIn();
     }
 }

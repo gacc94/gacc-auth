@@ -5,18 +5,33 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { defer, map, pipe, switchMap, tap } from 'rxjs';
 import { AuthFirebaseService } from '../https/auth.firebase';
 import { UserMapper } from '../mappers/user.mapper';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { withInit } from './features/init.feature';
+import { withDevTools, withStorage } from '@shared/stores/features';
+import { withSessionStorage, withStorageSync } from '@angular-architects/ngrx-toolkit';
+import { AuthState } from '../states/auth.state';
 
 /**
  * The store for handling authentication state.
  */
 export const AuthStore = signalStore(
-    // { providedIn: 'root' },
+    { providedIn: 'root' },
+    withDevTools('AuthStore'),
+
     /**
      * The initial state of the store.
      */
     withInit(),
+
+    withStorage({ key: 'user' }),
+    // withStorageSync(
+    //     {
+    //         key: 'user',
+    //         select: (state: AuthState) => state,
+    //         autoSync: true,
+    //     },
+    //     withSessionStorage(),
+    // ),
 
     /**
      * Additional properties injected into the store.
@@ -24,6 +39,7 @@ export const AuthStore = signalStore(
     withProps(() => ({
         _auth: inject(AuthFirebaseService),
         _router: inject(Router),
+        _activatedRoute: inject(ActivatedRoute),
     })),
 
     /**
@@ -43,7 +59,7 @@ export const AuthStore = signalStore(
                         tapResponse({
                             next: (user) => {
                                 patchState(store, { user, isLoading: false });
-                                store._router.navigate(['/']);
+                                store._router.navigate(['/dashboard']);
                             },
                             error: (error: Error) => {
                                 patchState(store, { isLoading: false, error });
@@ -53,11 +69,16 @@ export const AuthStore = signalStore(
                 }),
             ),
         ),
+
+        signOut: () => {
+            patchState(store, { user: null, isLoading: false, error: null });
+            store._router.navigate(['/auth']);
+        },
     })),
 
     withHooks({
         onInit: (store) => {
-            // store.signIn();
+            console.log('init');
         },
         onDestroy: (store) => {
             console.log('destroy');

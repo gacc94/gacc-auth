@@ -12,13 +12,13 @@ export const withInit = () => {
     return signalStoreFeature(
         withState(() => initAuhtState),
 
-        withDevtools('AuthStore'), // @TODO: only development
-        withStorageSync(
-            {
-                key: 'auth',
-                select: (state) => state,
-            },
-            withSessionStorage(),
-        ),
+        // withDevtools('AuthStore'), // @TODO: only development
+        // withStorageSync(
+        //     {
+        //         key: 'auth',
+        //         select: (state) => state,
+        //     },
+        //     withSessionStorage(),
+        // ),
     );
 };
