@@ -11,8 +11,7 @@ import { routes } from './app.routes';
 import { getApp, initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { FirebaseOptions } from '@angular/fire/app';
-import { AuthStore } from './features/auth/infrastructure/stores/auth.store';
-import { inject } from '@angular/core';
+import { storageProviders } from '@shared/storages/storage.provider';
 
 const environmentInitializer = provideEnvironmentInitializer(() => {
     // const store = inject(AuthStore);
@@ -32,7 +31,7 @@ const firebaseConfig: FirebaseOptions = {
 export const appConfig: ApplicationConfig = {
     providers: [
         environmentInitializer,
-
+        ...storageProviders,
         provideBrowserGlobalErrorListeners(),
         provideZonelessChangeDetection(),
         provideRouter(routes, withComponentInputBinding()),

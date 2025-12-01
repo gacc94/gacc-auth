@@ -15,7 +15,6 @@ import { AuthStore } from '@features/auth/infrastructure/stores/auth.store';
         <button matButton="filled" (click)="store.signOut()">Clear storage</button>
     `,
     styleUrl: './home.scss',
-    // providers: [AuthStore],
 })
 export default class Home {
     readonly store = inject(AuthStore);

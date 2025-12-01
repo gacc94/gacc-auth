@@ -1,62 +1,66 @@
-import { computed, effect, InjectionToken } from '@angular/core';
-import { patchState, signalStoreFeature, StateSignals, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import { effect, Input, Signal } from '@angular/core';
+import {
+    getState,
+    isWritableStateSource,
+    patchState,
+    signalStoreFeature,
+    withHooks,
+    withMethods,
+    withProps,
+    SignalStoreFeature,
+    EmptyFeatureResult,
+    SignalStoreFeatureResult,
+    StateSignals,
+    WritableStateSource,
+    watchState,
+} from '@ngrx/signals';
 import { inject } from '@angular/core';
-import type { Storage } from '@shared/storages/storage.model';
-import { SESSION_STORAGE_TOKEN } from '@shared/storages/storage.provider';
+import { LOCAL_STORAGE_TOKEN, SESSION_STORAGE_TOKEN } from '@shared/storages/storage.provider';
 
-export interface WithStorageConfig {
+type SignalState<T> = {
+    [K in keyof T]: Signal<T[K]>;
+};
+
+export type StateStore<State extends object> = WritableStateSource<State> & SignalState<State>;
+
+type storageType = 'session' | 'local';
+
+export interface WithStorageConfig<State extends object> {
     key: string;
-    storageToken?: InjectionToken<Storage>;
+    stateKey?: string;
+    storage: storageType;
     select?: (store: any) => any;
 }
 
-/**
- * Feature para persistir estado en storage
- *
- * - Carga valores del storage y hace merge con estado inicial
- * - Guarda solo lo que selecciones con select()
- * - Usa tu implementación de Storage (con parse/stringify ya incluido)
- */
-export function withStorage(config: WithStorageConfig) {
+export function withStorage<State extends object>(config: WithStorageConfig<State>) {
     return signalStoreFeature(
         withProps(() => ({
-            _storage: inject(SESSION_STORAGE_TOKEN),
+            _storage: inject(config.storage === 'session' ? SESSION_STORAGE_TOKEN : LOCAL_STORAGE_TOKEN),
         })),
-
-        withComputed((store: any) => ({
-            storeComputed: computed(() => {
-                return store;
-            }),
+        withMethods((store) => ({
+            removeStorage: () => {
+                store._storage.removeItem(config.key);
+            },
         })),
 
         withHooks({
-            onInit(store: any) {
+            onInit(store) {
                 const saved = store._storage.getItem(config.key);
 
-                if (saved) {
-                    patchState(store, saved);
+                if (saved && saved !== null) {
+                    if (config.select) {
+                        const state = config.select(store)();
+                        const dataSlices = { ...structuredClone(state), [config.key]: structuredClone(saved) };
+                        patchState(store, dataSlices);
+                    } else {
+                        patchState(store, saved);
+                    }
                 }
 
-                // 2. GUARDAR: Auto-save en cada cambio
-                effect(() => {
-                    const state: Record<string, any> = {};
+                watchState(store, (state) => {
+                    const dataToSave = config.select ? config.select(store)() : state;
 
-                    for (let key in store) {
-                        try {
-                            if (typeof store[key]() !== 'function' && !key.startsWith('_')) {
-                                try {
-                                    console.log({ key, value: store[key]() });
-                                    state[key] = store[key]();
-                                } catch (error) {
-                                    console.log(error);
-                                }
-                            }
-                        } catch (error) {
-                            console.log((error as any).message);
-                        }
-                    }
-
-                    store._storage.setItem(config.key, state);
+                    store._storage.setItem(config.key, dataToSave);
                 });
             },
         }),

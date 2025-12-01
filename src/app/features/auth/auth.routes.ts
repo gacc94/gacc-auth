@@ -6,7 +6,6 @@ export default <Routes>[
     {
         path: 'sign-in',
         component: SignIn,
-        canActivate: [authGuard],
     },
     {
         path: '**',

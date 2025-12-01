@@ -16,14 +16,16 @@ import { AuthState } from '../states/auth.state';
  */
 export const AuthStore = signalStore(
     { providedIn: 'root' },
-    withDevTools('AuthStore'),
 
     /**
      * The initial state of the store.
      */
     withInit(),
 
-    withStorage({ key: 'user' }),
+    withDevTools('AuthStore'),
+
+    withStorage({ key: 'user', select: (state: AuthState) => state.user, storage: 'session' }),
+
     // withStorageSync(
     //     {
     //         key: 'user',
@@ -58,7 +60,7 @@ export const AuthStore = signalStore(
                         map((user) => UserMapper.toUserState(user)),
                         tapResponse({
                             next: (user) => {
-                                patchState(store, { user, isLoading: false });
+                                patchState(store, { user: { ...user }, isLoading: false });
                                 store._router.navigate(['/dashboard']);
                             },
                             error: (error: Error) => {
