@@ -1,7 +1,6 @@
 import { effect, Input, Signal } from '@angular/core';
 import {
     getState,
-    isWritableStateSource,
     patchState,
     signalStoreFeature,
     withHooks,
@@ -9,10 +8,9 @@ import {
     withProps,
     SignalStoreFeature,
     EmptyFeatureResult,
-    SignalStoreFeatureResult,
-    StateSignals,
     WritableStateSource,
     watchState,
+    SignalStoreFeatureResult,
 } from '@ngrx/signals';
 import { inject } from '@angular/core';
 import { LOCAL_STORAGE_TOKEN, SESSION_STORAGE_TOKEN } from '@shared/storages/storage.provider';
@@ -25,14 +23,16 @@ export type StateStore<State extends object> = WritableStateSource<State> & Sign
 
 type storageType = 'session' | 'local';
 
-export interface WithStorageConfig<State extends object> {
+export interface StorageConfig<State> {
     key: string;
-    stateKey?: string;
     storage: storageType;
-    select?: (store: any) => any;
+    select?: (state: State) => State[keyof State];
+    stateKey: keyof State;
 }
 
-export function withStorage<State extends object>(config: WithStorageConfig<State>) {
+export const withStorage = <Input extends SignalStoreFeatureResult>(
+    config: StorageConfig<Input['state']>,
+): SignalStoreFeature<Input, EmptyFeatureResult> => {
     return signalStoreFeature(
         withProps(() => ({
             _storage: inject(config.storage === 'session' ? SESSION_STORAGE_TOKEN : LOCAL_STORAGE_TOKEN),
@@ -49,8 +49,8 @@ export function withStorage<State extends object>(config: WithStorageConfig<Stat
 
                 if (saved && saved !== null) {
                     if (config.select) {
-                        const state = config.select(store)();
-                        const dataSlices = { ...structuredClone(state), [config.key]: structuredClone(saved) };
+                        const state = (config.select(store) as any)();
+                        const dataSlices = { ...structuredClone(state), [config.stateKey]: structuredClone(saved) };
                         patchState(store, dataSlices);
                     } else {
                         patchState(store, saved);
@@ -58,11 +58,11 @@ export function withStorage<State extends object>(config: WithStorageConfig<Stat
                 }
 
                 watchState(store, (state) => {
-                    const dataToSave = config.select ? config.select(store)() : state;
+                    const dataToSave = config.select ? (config.select(store) as any)() : state;
 
                     store._storage.setItem(config.key, dataToSave);
                 });
             },
         }),
     );
-}
+};

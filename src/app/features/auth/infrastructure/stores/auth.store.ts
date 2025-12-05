@@ -8,8 +8,9 @@ import { UserMapper } from '../mappers/user.mapper';
 import { Router, ActivatedRoute } from '@angular/router';
 import { withInit } from './features/init.feature';
 import { withDevTools, withStorage } from '@shared/stores/features';
-import { withSessionStorage, withStorageSync } from '@angular-architects/ngrx-toolkit';
+import { withSessionStorage, withStorageSync as withStorageSyncAngArq } from '@angular-architects/ngrx-toolkit';
 import { AuthState } from '../states/auth.state';
+import { withStorageSync } from '@shared/stores/features/storage-sync/with-storage-sync.feature';
 
 /**
  * The store for handling authentication state.
@@ -24,16 +25,33 @@ export const AuthStore = signalStore(
 
     withDevTools('AuthStore'),
 
-    withStorage({ key: 'user', select: (state: AuthState) => state.user, storage: 'session' }),
+    withStorage({
+        key: 'user',
+        stateKey: 'user',
+        select: (state) => state.user,
+        storage: 'session',
+    }),
 
-    // withStorageSync(
+    // withStorageSyncAngArq(
     //     {
-    //         key: 'user',
-    //         select: (state: AuthState) => state,
-    //         autoSync: true,
+    //         key: 'auth',
+    //         select: (state) => state.user,
     //     },
     //     withSessionStorage(),
     // ),
+
+    // withStorageSync({
+    //     key: 'auth-2',
+    //     storage: 'session',
+    //     select: (state: AuthState) => ({ user: state.user }),
+    // }),
+
+    withStorageSync({
+        key: 'user_2',
+        storage: () => sessionStorage,
+        select: (state: AuthState) => state.user,
+        stateKey: 'user',
+    }),
 
     /**
      * Additional properties injected into the store.
