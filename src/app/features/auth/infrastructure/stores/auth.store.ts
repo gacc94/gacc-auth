@@ -1,5 +1,6 @@
 import { inject } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { withGlitchTracking } from "@angular-architects/ngrx-toolkit";
 import { tapResponse } from "@ngrx/operators";
 import {
 	patchState,
@@ -9,7 +10,7 @@ import {
 	withProps,
 } from "@ngrx/signals";
 import { rxMethod } from "@ngrx/signals/rxjs-interop";
-import { withDevTools, withStorage } from "@shared/stores/features";
+import { withDevTools } from "@shared/stores/features";
 import { withStorageSync } from "@shared/stores/features/storage-sync/with-storage-sync.feature";
 import { defer, map, pipe, switchMap, tap } from "rxjs";
 import { AuthFirebaseService } from "../https/auth.firebase";
@@ -28,17 +29,12 @@ export const AuthStore = signalStore(
 	 */
 	withInit(),
 
-	withDevTools("AuthStore"),
+	// withDevTools("AuthStore", withGlitchTracking()),
 
-	withStorage({
-		key: "user",
-		stateKey: "user",
-		select: (state) => state.user,
-		storage: "session",
-	}),
+	withDevTools("AuthStore", withGlitchTracking()),
 
 	withStorageSync({
-		key: "user_2",
+		key: "user",
 		stateKey: "user",
 		storage: () => sessionStorage,
 		select: (state: AuthState) => state.user,
@@ -88,10 +84,10 @@ export const AuthStore = signalStore(
 	})),
 
 	withHooks({
-		onInit: (store) => {
+		onInit: () => {
 			console.log("init");
 		},
-		onDestroy: (store) => {
+		onDestroy: () => {
 			console.log("destroy");
 			// patchState(store, { user: null, isLoading: false, error: null });
 		},
