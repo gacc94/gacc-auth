@@ -1,5 +1,3 @@
-import { isPlatformServer } from "@angular/common";
-import { inject, PLATFORM_ID } from "@angular/core";
 import {
 	type EmptyFeatureResult,
 	type SignalStoreFeature,
@@ -18,22 +16,22 @@ import {
 } from "./storage.strategies";
 
 // --- FEATURE ---
-export function withStorageSync<Input extends SignalStoreFeatureResult>(
+export const withStorageSync = <Input extends SignalStoreFeatureResult>(
 	configOrKey: SyncConfig<Input["state"]> | string,
 	storageStrategy?: SyncStorageStrategy<Input["state"]>,
-): SignalStoreFeature<Input, EmptyFeatureResult> {
-	// Normalización
+): SignalStoreFeature<Input, EmptyFeatureResult> => {
+	// 1. Normalización de la configuración
 	const config: Required<SyncConfig<Input["state"]>> = {
 		autoSync: true,
 		select: (state) => state,
-		parse: (s) => JSON.parse(s),
-		stringify: (v) => JSON.stringify(v),
+		parse: JSON.parse,
+		stringify: JSON.stringify,
 		storage: () => localStorage,
-		stateKey: undefined as unknown as keyof Input["state"], // Cast seguro para evitar Biome warning
+		stateKey: undefined as any,
 		...(typeof configOrKey === "string" ? { key: configOrKey } : configOrKey),
 	};
 
-	// Selección de Estrategia
+	//* 2. Selección de Estrategia
 	const factory =
 		storageStrategy ??
 		(config.storage() === localStorage
@@ -41,23 +39,23 @@ export function withStorageSync<Input extends SignalStoreFeatureResult>(
 			: withSessionStorage());
 
 	return signalStoreFeature(
-		withMethods((store, platformId = inject(PLATFORM_ID)) => {
+		withMethods((store) => {
 			return factory(
 				config,
-				// CASTING NECESARIO: Soluciona el error de TypeScript con los tipos internos
+				// CASTING: Necesario para evitar conflictos de tipos internos de SignalStore
 				store as unknown as SyncStoreForFactory<Input["state"]>,
-				isPlatformServer(platformId),
 			);
 		}),
 		withHooks({
-			onInit(store, platformId = inject(PLATFORM_ID)) {
-				if (isPlatformServer(platformId)) return;
-
+			onInit(store) {
 				if (config.autoSync) {
+					// A. Leer al iniciar (Hydration)
 					store.readFromStorage();
+
+					// B. Escuchar cambios y guardar (Persistence)
 					watchState(store, () => store.writeToStorage());
 				}
 			},
 		}),
 	);
-}
+};

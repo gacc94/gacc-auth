@@ -1,15 +1,8 @@
 import { inject, type Type } from "@angular/core";
 import { getState, patchState, type WritableStateSource } from "@ngrx/signals";
-import { LocalStorageService, SessionStorageService } from "./storage.services";
-// Importamos la config desde el feature (Archivo 3)
+import { LocalStorageService, SessionStorageService } from "./storage.service"; // Importamos la config desde el feature (Archivo 3)
 
 // --- TIPOS ---
-
-export type SyncMethods = {
-	clearStorage(): void;
-	readFromStorage(): void;
-	writeToStorage(): void;
-};
 
 export type SyncConfig<State> = {
 	key: string;
@@ -20,21 +13,27 @@ export type SyncConfig<State> = {
 
 	// CAMBIO 2: Nueva propiedad opcional.
 	// Si guardas un primitivo, DIME a qué propiedad del store pertenece.
-	stateKey?: keyof State | undefined;
+	stateKey?: keyof State;
 
-	parse?: (stateString: string) => unknown;
-	stringify?: (state: unknown) => string;
+	parse?: (stateString: string) => any;
+	stringify?: (state: any) => string;
 	storage?: () => Storage;
 };
-// Tipo compatible con el Store
+
+export type SyncMethods = {
+	clearStorage(): void;
+	readFromStorage(): void;
+	writeToStorage(): void;
+};
+
+// Tipo compatible con el Store para el factory
 export type SyncStoreForFactory<State extends object> =
 	WritableStateSource<State>;
 
-// Definición de la estrategia
+// Definición de la estrategia (Ya NO recibe isServer)
 export type SyncStorageStrategy<State extends object> = (
 	config: Required<SyncConfig<State>>,
 	store: SyncStoreForFactory<State>,
-	isServer: boolean,
 ) => SyncMethods;
 
 // --- IMPLEMENTACIÓN ---
@@ -42,17 +41,11 @@ export type SyncStorageStrategy<State extends object> = (
 function createSyncMethods<State extends object>(
 	StorageServiceToken: Type<LocalStorageService | SessionStorageService>,
 ): SyncStorageStrategy<State> {
-	return (config, store, isServer) => {
-		if (isServer) {
-			return {
-				clearStorage: () => undefined,
-				readFromStorage: () => undefined,
-				writeToStorage: () => undefined,
-			};
-		}
-
+	return (config, store) => {
+		// Inyección directa del servicio de storage
 		const storage = inject(StorageServiceToken);
-		// Destructuramos la nueva propiedad stateKey
+
+		// Destructuramos la configuración
 		const { key, parse, select, stringify, stateKey } = config;
 
 		return {
@@ -66,17 +59,14 @@ function createSyncMethods<State extends object>(
 					try {
 						const parsedData = parse(stateString);
 
-						// 🔥 LÓGICA HÍBRIDA (Objeto vs Primitivo) 🔥
+						// 🔥 LÓGICA HÍBRIDA (Objeto vs Primitivo/StateKey) 🔥
 						if (stateKey) {
-							// CASO 1: Es un valor primitivo (o un objeto suelto) que pertenece a UNA propiedad.
-							patchState(store, {
-								[stateKey]: parsedData,
-							} as Partial<State>);
-						} else if (
-							typeof parsedData === "object" &&
-							parsedData !== null
-						) {
-							// CASO 2: Es un objeto parcial con la estructura del store.
+							// CASO 1: Es un valor que pertenece a UNA propiedad específica.
+							// Envolvemos el dato: { [stateKey]: valor } para que patchState funcione.
+							patchState(store, { [stateKey]: parsedData } as Partial<State>);
+						} else {
+							// CASO 2: Es un objeto parcial (slice) que ya tiene la estructura del store.
+							// patchState lo usa directamente.
 							patchState(store, parsedData as Partial<State>);
 						}
 					} catch (error) {
@@ -90,9 +80,16 @@ function createSyncMethods<State extends object>(
 
 			writeToStorage() {
 				const state = getState(store);
-				// select puede devolver un objeto o un primitivo
+				// Ejecutamos el selector (devuelve un objeto o un primitivo)
 				const dataToSave = select(state as State);
-				storage.setItem(key, stringify(dataToSave));
+				try {
+					storage.setItem(key, stringify(dataToSave));
+				} catch (error) {
+					console.error(
+						`[withStorageSync] Error saving key '${key}' to storage:`,
+						error,
+					);
+				}
 			},
 		};
 	};

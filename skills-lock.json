@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "skills": {
+    "angular-best-practices": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "a45015c76bdc0223ed6fd78c135692f9e0044fb24a296abd1cc5b39ed271da60"
+    },
+    "angular-best-practices-material": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "05c2889accf2e7fd3823f68efd12867ce8825910c9c29b9d0842f345a2887eac"
+    },
+    "angular-best-practices-ngrx": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "3ced41dfe6d6738c27627675a4a8f48228badcd6470654173cc235d04d812a6f"
+    },
+    "angular-best-practices-primeng": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "9cbe2d007fde9ada2627fd60474b48490010f9f2071e2107ced9add84c1b2403"
+    },
+    "angular-best-practices-rule-creator": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "7444d40134927c438df8041ffdc07d18e9e90c088b296a13a68f1cf6d1bd4e59"
+    },
+    "angular-best-practices-rules-reviewer": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "fe92ce478be33f4401a9084fdc3fe30fdb3a38014fdcc6efa5524661ca420d22"
+    },
+    "angular-best-practices-signalstore": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "08b30f59d0205215720e6a057e4bd94db544d3b3eaccfe064768c9c8713d9bb2"
+    },
+    "angular-best-practices-spartan": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "89da02751972cc693c29f37edb75dab3051147ea9d4a03690915aa79afaff8b8"
+    },
+    "angular-best-practices-tanstack": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "3ae45da35237307d6366165c1514d3853f3f7cd69269e9bae43abe27362160fd"
+    },
+    "angular-best-practices-transloco": {
+      "source": "alfredoperez/angular-best-practices",
+      "sourceType": "github",
+      "computedHash": "a48a7414b082426948dcd1a18797a1764b3f716aba498a6f8d652cd0ce9a666e"
+    }
+  }
+}
