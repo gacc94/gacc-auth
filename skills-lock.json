@@ -100,6 +100,11 @@
       "source": "analogjs/angular-skills",
       "sourceType": "github",
       "computedHash": "2a67063279e8ac1b5cf3d9c4e9ed4652508564640c1fc59642857d4f6d20db11"
+    },
+    "scss-best-practices": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "computedHash": "16ac9e8bf135304254a358776c5fac043799c1c3ac40221da1338ee972506de5"
     }
   }
 }
