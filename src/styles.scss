@@ -1,3 +1,23 @@
+// ==========================================================================
+// Main SCSS Manifest File
+// ==========================================================================
+// Note: We DO NOT import 'abstracts' here.
+// Abstracts (variables, mixins, functions) do not produce CSS on their own.
+// They should be imported in each individual component file using:
+// @use 'abstracts' as *;
+//
+// Here, we only import files that output CSS globally.
+
+// 1. Vendors (e.g., normalize, third-party library css)
+// @use 'vendors/bootstrap-grid';
+
+// // 2. Base
+// @use 'base/reset';
+// @use 'base/typography';
+// @use 'base/base';
+
+// // 3. Layout / Architecture
+// @use 'layout/grid';
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
 // components according to the Material 3 design spec.

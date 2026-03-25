@@ -1,0 +1,53 @@
+// ==========================================================================
+// Layout - Grid System
+// ==========================================================================
+@use 'abstracts' as *;
+@use 'sass:map';
+
+.container {
+  width: 100%;
+  padding-right: $spacing-md;
+  padding-left: $spacing-md;
+  margin-right: auto;
+  margin-left: auto;
+
+  @include respond-to('sm') {
+    max-width: map.get($breakpoints, 'sm');
+  }
+
+  @include respond-to('md') {
+    max-width: map.get($breakpoints, 'md');
+  }
+
+  @include respond-to('lg') {
+    max-width: map.get($breakpoints, 'lg');
+  }
+
+  @include respond-to('xl') {
+    max-width: map.get($breakpoints, 'xl');
+  }
+
+  @include respond-to('xxl') {
+    max-width: map.get($breakpoints, 'xxl');
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -$spacing-md;
+  margin-left: -$spacing-md;
+}
+
+.col {
+  flex-basis: 0;
+  flex-grow: 1;
+  max-width: 100%;
+  padding-right: $spacing-md;
+  padding-left: $spacing-md;
+}
+
+/* Simple helper for full width */
+.w-100 {
+  width: 100% !important;
+}

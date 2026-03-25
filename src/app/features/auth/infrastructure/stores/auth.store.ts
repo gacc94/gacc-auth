@@ -11,13 +11,12 @@ import {
 } from "@ngrx/signals";
 import { rxMethod } from "@ngrx/signals/rxjs-interop";
 import { withDevTools } from "@shared/stores/features";
-import { withStorageSync } from "@shared/stores/features/storage-sync/with-storage-sync.feature";
+import { withStorageSync } from "@shared/stores/features/storage-sync-no-server/with-storage-sync.feature";
 import { defer, map, pipe, switchMap, tap } from "rxjs";
 import { AuthFirebaseService } from "../https/auth.firebase";
 import { UserMapper } from "../mappers/user.mapper";
 import type { AuthState } from "../states/auth.state";
 import { withInit } from "./features/init.feature";
-
 /**
  * The store for handling authentication state.
  */
@@ -29,8 +28,6 @@ export const AuthStore = signalStore(
 	 */
 	withInit(),
 
-	// withDevTools("AuthStore", withGlitchTracking()),
-
 	withDevTools("AuthStore", withGlitchTracking()),
 
 	withStorageSync({
@@ -39,6 +36,18 @@ export const AuthStore = signalStore(
 		storage: () => sessionStorage,
 		select: (state: AuthState) => state.user,
 	}),
+
+	withStorageSync({
+		key: "loading",
+		stateKey: "isLoading",
+		storage: () => sessionStorage,
+	}),
+
+	// withStorageSync({
+	// 	key: "error",
+	// 	stateKey: "error",
+	// 	storage: () => sessionStorage,
+	// }),
 
 	/**
 	 * Additional properties injected into the store.

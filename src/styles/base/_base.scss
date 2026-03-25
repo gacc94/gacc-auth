@@ -1,0 +1,39 @@
+// ==========================================================================
+// Base Styles - Base Elements
+// ==========================================================================
+@use 'abstracts' as *;
+
+body {
+  background-color: $color-background;
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+ul, ol {
+  padding-left: $spacing-lg;
+  margin-top: 0;
+  margin-bottom: $spacing-md;
+}
+
+/* Remove default focus styles inside mouse users, apply them for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+a, button, input, select, textarea {
+  @include focus-visible;
+}

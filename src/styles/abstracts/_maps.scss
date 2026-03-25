@@ -1,0 +1,29 @@
+// ==========================================================================
+// Maps
+// ==========================================================================
+@use 'variables' as vars;
+
+$colors: (
+  'primary': vars.$color-primary,
+  'secondary': vars.$color-secondary,
+  'danger': vars.$color-error,
+  'warning': vars.$color-warning,
+  'success': vars.$color-success,
+  'gray-100': #f8f9fa,
+  'gray-200': #e9ecef,
+  'gray-300': #dee2e6,
+  'gray-400': vars.$color-border,
+  'gray-500': #adb5bd,
+  'gray-600': vars.$color-text-muted,
+  'gray-700': #495057,
+  'gray-800': #343a40,
+  'gray-900': #212529,
+);
+
+$breakpoints: (
+  'sm': 576px,
+  'md': 768px,
+  'lg': 992px,
+  'xl': 1200px,
+  'xxl': 1400px
+);

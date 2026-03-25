@@ -1,0 +1,9 @@
+// ==========================================================================
+// Abstracts Barrel File
+// ==========================================================================
+// @forward makes variables, mixins, functions available to anyone importing 'abstracts'
+
+@forward 'variables';
+@forward 'maps';
+@forward 'mixins';
+@forward 'functions';
