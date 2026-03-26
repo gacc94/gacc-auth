@@ -20,11 +20,11 @@ export interface StorageSyncConfig<State extends object> {
 	 */
 	select: (state: State) => unknown;
 	/** Optional: A custom rehydration function to map the storage value back into the state. */
-	rehydrate?: (value: any) => Partial<State>;
+	rehydrate?: (value: unknown) => Partial<State>;
 	/** Optional: Custom parser for the stored string value. */
-	parse?: (value: string) => any;
+	parse?: (value: string) => unknown;
 	/** Optional: Custom stringifier for the value to be stored. */
-	stringify?: (value: any) => string;
+	stringify?: (value: unknown) => string;
 	/** Optional: Manually specify the state key if auto-discovery is NOT desired or possible. */
 	stateKey?: keyof State;
 }
@@ -43,18 +43,25 @@ export function withStorageSync<State extends object>(
 	return signalStoreFeature(
 		{ state: {} as State },
 		withMethods((store: WritableStateSource<State>) => {
-			const { key, select, parse, stringify, rehydrate: customRehydrate } = config;
+			const {
+				key,
+				select,
+				parse,
+				stringify,
+				rehydrate: customRehydrate,
+			} = config;
 
 			// --- Auto-Discovery Logic ---
 			let discoveredKey: keyof State | undefined = config.stateKey;
 
 			if (!discoveredKey && !customRehydrate) {
 				// Use a Proxy to detect which property is being accessed in the select function
-				const discoveryProxy = new Proxy({} as any, {
+				// Using 'as never' to allow the Proxy to intercept any property access during discovery
+				const discoveryProxy = new Proxy({} as never, {
 					get(_, prop) {
 						discoveredKey = prop as keyof State;
 						// Return a nested proxy to avoid crashes if the selector accesses child properties
-						const nestedProxy = (): any =>
+						const nestedProxy = (): unknown =>
 							new Proxy({}, { get: () => nestedProxy() });
 						return nestedProxy();
 					},
@@ -63,7 +70,7 @@ export function withStorageSync<State extends object>(
 				try {
 					select(discoveryProxy);
 				} catch {
-					/* Silent catch: detection-only phase */
+					/* Silent catch: intentional for the discovery phase */
 				}
 			}
 
@@ -77,7 +84,9 @@ export function withStorageSync<State extends object>(
 						const stateString = sessionStorage.getItem(key);
 						if (stateString === null) return;
 
-						const rawData = parse ? parse(stateString) : JSON.parse(stateString);
+						const rawData: unknown = parse
+							? parse(stateString)
+							: JSON.parse(stateString);
 
 						let patch: Partial<State>;
 
