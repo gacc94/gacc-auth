@@ -36,7 +36,17 @@ export const BROWSER_SESSION_STORAGE = new InjectionToken<Storage | null>(
 );
 
 @Injectable({ providedIn: "root" })
-export class LocalStorageService implements StorageProvider {
+export class LocalStorageService implements Storage {
+	[name: string]: any;
+	length: number;
+
+	constructor() {
+		this.length = this.storage?.length ?? 0;
+	}
+
+	key(index: number): string | null {
+		throw new Error("Method not implemented.");
+	}
 	private readonly storage = inject(BROWSER_LOCAL_STORAGE);
 
 	getItem(key: string): string | null {

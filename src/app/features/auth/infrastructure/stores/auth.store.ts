@@ -1,8 +1,13 @@
 import { inject } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { withGlitchTracking } from "@angular-architects/ngrx-toolkit";
+import {
+	withGlitchTracking,
+	// withStorageSync,
+} from "@angular-architects/ngrx-toolkit";
+import { User } from "@features/auth/domain/entities/user";
 import { tapResponse } from "@ngrx/operators";
 import {
+	getState,
 	patchState,
 	signalStore,
 	withHooks,
@@ -11,12 +16,13 @@ import {
 } from "@ngrx/signals";
 import { rxMethod } from "@ngrx/signals/rxjs-interop";
 import { withDevTools } from "@shared/stores/features";
-import { withStorageSync } from "@shared/stores/features/storage-sync-no-server/with-storage-sync.feature";
+// import { withStorageSync } from "@shared/stores/features/storage-sync-no-server/with-storage-sync.feature";
 import { defer, map, pipe, switchMap, tap } from "rxjs";
 import { AuthFirebaseService } from "../https/auth.firebase";
 import { UserMapper } from "../mappers/user.mapper";
 import type { AuthState } from "../states/auth.state";
 import { withInit } from "./features/init.feature";
+import { withStorageSync } from "./features/with-storage-sync.feature";
 /**
  * The store for handling authentication state.
  */
@@ -30,18 +36,30 @@ export const AuthStore = signalStore(
 
 	withDevTools("AuthStore", withGlitchTracking()),
 
+	// withStorageSync({
+	// 	key: "user",
+	// 	stateKey: "user",
+	// 	storage: () => sessionStorage,
+	// 	select: (state: AuthState) => state.user,
+	// }),
+
 	withStorageSync({
 		key: "user",
-		stateKey: "user",
-		storage: () => sessionStorage,
+		// stateKey: "user",
 		select: (state: AuthState) => state.user,
 	}),
 
-	withStorageSync({
-		key: "loading",
-		stateKey: "isLoading",
-		storage: () => sessionStorage,
-	}),
+	// withStorageSync({
+	// 	key: "user",
+	// 	storage: () => sessionStorage,
+	// 	select: (state) => state.user,
+	// }),
+
+	// withStorageSync({
+	// 	key: "loading",
+	// 	// stateKey: "isLoading",
+	// 	storage: () => sessionStorage,
+	// }),
 
 	// withStorageSync({
 	// 	key: "error",
@@ -92,13 +110,13 @@ export const AuthStore = signalStore(
 		},
 	})),
 
-	withHooks({
-		onInit: () => {
+	withHooks((store) => ({
+		onInit: async () => {
 			console.log("init");
+			console.log(getState(store));
 		},
 		onDestroy: () => {
 			console.log("destroy");
-			// patchState(store, { user: null, isLoading: false, error: null });
 		},
-	}),
+	})),
 );

@@ -1,3 +1,5 @@
+import { User } from "@features/auth/domain/entities/user";
+import type { AuthState } from "@features/auth/infrastructure/states/auth.state";
 import {
 	type EmptyFeatureResult,
 	type SignalStoreFeature,
@@ -7,6 +9,7 @@ import {
 	withHooks,
 	withMethods,
 } from "@ngrx/signals";
+import { LocalStorage } from "@shared/storages/local-storage";
 import {
 	type NormalizedSyncConfig,
 	type SyncConfig,
@@ -56,16 +59,13 @@ export function withStorageSync<Input extends SignalStoreFeatureResult>(
 	return signalStoreFeature(
 		withMethods((store) => {
 			// Create and return the synchronization methods using the selected factory
-			return factory(
-				config,
-				store as unknown as SyncStoreForFactory<Input["state"]>,
-			);
+			return factory(config, store as SyncStoreForFactory<Input["state"]>);
 		}),
 		withHooks({
 			onInit(store) {
 				if (config.autoSync) {
 					// We cast to SyncMethods because they were added by the previous feature in signalStoreFeature
-					const syncMethods = store as unknown as SyncMethods;
+					const syncMethods = store as SyncMethods;
 
 					// A. Initial hydration: Read from storage and update the store
 					syncMethods.readFromStorage();
