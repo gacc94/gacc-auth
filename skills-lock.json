@@ -1,6 +1,21 @@
 {
   "version": 1,
   "skills": {
+    "PR Review": {
+      "source": "angular/angular",
+      "sourceType": "github",
+      "computedHash": "d442fc48460c6907ad3fa6719068e0f344581ab7fe02e1af29796a4111a3012b"
+    },
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "computedHash": "6462f04969f59f771150e6410e6a11fa397f2934be0b51e8650f495feed1e28d"
+    },
+    "adev-writing-guide": {
+      "source": "angular/angular",
+      "sourceType": "github",
+      "computedHash": "0da9315d3f7e86f7d80300a36b2a8c85ed64ed318f3512c24324a173d3a6a839"
+    },
     "angular-best-practices": {
       "source": "alfredoperez/angular-best-practices",
       "sourceType": "github",
@@ -56,6 +71,11 @@
       "sourceType": "github",
       "computedHash": "2789fdf11e2a70832ce2e6e79954018325a010ebdd45c5d4b1e7bfdf44679b7c"
     },
+    "angular-developer": {
+      "source": "angular/skills",
+      "sourceType": "github",
+      "computedHash": "b7764c591c965d85f95f1d4f6d3620b6ab92a1b1fedbcdead7d59e946fc3fd2e"
+    },
     "angular-di": {
       "source": "analogjs/angular-skills",
       "sourceType": "github",
@@ -101,15 +121,50 @@
       "sourceType": "github",
       "computedHash": "2a67063279e8ac1b5cf3d9c4e9ed4652508564640c1fc59642857d4f6d20db11"
     },
+    "bun": {
+      "source": "bun.sh",
+      "sourceType": "well-known",
+      "computedHash": "c20fe20eb84bb56fd5a96eae6e36c5fd8d38f989818a4944f8a08140fe5e7a5b"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
     "jsdoc-typescript-docs": {
       "source": "patricio0312rev/skills",
       "sourceType": "github",
       "computedHash": "5b4f9de4974d5200db813921484dd4784c77bea7f3c0c79b31472e9546c374fd"
     },
+    "reference-compiler-cli": {
+      "source": "angular/angular",
+      "sourceType": "github",
+      "computedHash": "ce937230b5374cf04b00a76251c3545b3dd43797407ef67ebd44b21229a33bd8"
+    },
+    "reference-core": {
+      "source": "angular/angular",
+      "sourceType": "github",
+      "computedHash": "16783417eeebecc4c35f5253872c2155967de10bd3e6b5d26f0bf950ff9347d0"
+    },
+    "reference-signal-forms": {
+      "source": "angular/angular",
+      "sourceType": "github",
+      "computedHash": "c48a51a68ab96d93ce98a7a3b55995208c70436423523ea64ae983a1ffa23020"
+    },
     "scss-best-practices": {
       "source": "mindrally/skills",
       "sourceType": "github",
       "computedHash": "16ac9e8bf135304254a358776c5fac043799c1c3ac40221da1338ee972506de5"
+    },
+    "seo": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "computedHash": "f1fed683b76913d26fbf1aa1e008e6932f7771701fc3a79925b042236aa4681a"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "3a3be8c925f96ac4e1280db28a01677e7ca5197f3792de2bbf35ab3bb324b6dd"
     }
   }
 }

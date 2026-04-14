@@ -21,8 +21,8 @@ import { defer, map, pipe, switchMap, tap } from "rxjs";
 import { AuthFirebaseService } from "../https/auth.firebase";
 import { UserMapper } from "../mappers/user.mapper";
 import type { AuthState } from "../states/auth.state";
-import { withInit } from "./features/init.feature";
 import { withStorageSync } from "./features/with-storage-sync.feature";
+import { withInit } from "./init.feature";
 /**
  * The store for handling authentication state.
  */
@@ -48,10 +48,10 @@ export const AuthStore = signalStore(
 			key: "user",
 			select: (state) => state.user,
 		},
-		{
-			key: "loading",
-			select: (state) => state.isLoading,
-		},
+		// {
+		// 	key: "loading",
+		// 	select: (state) => state.isLoading,
+		// },
 	]),
 
 	// withStorageSync({

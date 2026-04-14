@@ -1,3 +1,4 @@
+import type { StorageProvider } from "./storage.service";
 import type {
 	NormalizedSyncConfig,
 	StorageSyncConfig,
@@ -58,25 +59,27 @@ export function normalizeSyncConfigs<State extends object>(
 }
 
 /**
- * Retrieves and parses a value from the session storage.
+ * Retrieves and parses a value from the provided storage provider.
  *
+ * @param {StorageProvider} storage - The injected storage provider (LocalStorageService / SessionStorageService).
  * @param {string} key - The storage key.
  * @param {(value: string) => unknown} [parse] - An optional custom parse function.
  * @returns {unknown | null} The parsed value, or null if the key doesn't exist.
  */
 export function readValueFromStorage(
+	storage: StorageProvider,
 	key: string,
 	parse?: (value: string) => unknown,
 ): unknown | null {
 	try {
-		const stateString = sessionStorage.getItem(key);
+		const stateString = storage.getItem(key);
 		if (stateString === null) {
 			return null;
 		}
 		return parse ? parse(stateString) : JSON.parse(stateString);
 	} catch (error) {
 		console.error(
-			`[withStorageSync] Failed to rehydrate key '${key}' from session storage:`,
+			`[withStorageSync] Failed to rehydrate key '${key}' from storage:`,
 			error,
 		);
 		return null;
@@ -84,13 +87,15 @@ export function readValueFromStorage(
 }
 
 /**
- * Saves a value into the session storage.
+ * Saves a value into the provided storage provider.
  *
+ * @param {StorageProvider} storage - The injected storage provider.
  * @param {string} key - The storage key.
  * @param {unknown} dataToSave - The data to be persisted.
  * @param {(value: unknown) => string} [stringify] - An optional custom stringify function.
  */
 export function writeValueToStorage(
+	storage: StorageProvider,
 	key: string,
 	dataToSave: unknown,
 	stringify?: (value: unknown) => string,
@@ -99,10 +104,10 @@ export function writeValueToStorage(
 		const valueToStore = stringify
 			? stringify(dataToSave)
 			: JSON.stringify(dataToSave);
-		sessionStorage.setItem(key, valueToStore);
+		storage.setItem(key, valueToStore);
 	} catch (error) {
 		console.error(
-			`[withStorageSync] Failed to save key '${key}' to session storage:`,
+			`[withStorageSync] Failed to save key '${key}' to storage:`,
 			error,
 		);
 	}
