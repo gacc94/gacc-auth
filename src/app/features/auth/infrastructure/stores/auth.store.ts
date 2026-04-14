@@ -43,10 +43,16 @@ export const AuthStore = signalStore(
 	// 	select: (state: AuthState) => state.user,
 	// }),
 
-	withStorageSync({
-		key: "user",
-		select: (state) => state.user,
-	}),
+	withStorageSync([
+		{
+			key: "user",
+			select: (state) => state.user,
+		},
+		{
+			key: "loading",
+			select: (state) => state.isLoading,
+		},
+	]),
 
 	// withStorageSync({
 	// 	key: "user",
