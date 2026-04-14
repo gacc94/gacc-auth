@@ -1,21 +1,20 @@
-import { inject, type Type } from "@angular/core";
 import {
-	getState,
-	patchState,
+	type EmptyFeatureResult,
+	type SignalStoreFeature,
+	type SignalStoreFeatureResult,
 	signalStoreFeature,
-	type,
-	type WritableStateSource,
 	watchState,
 	withHooks,
 	withMethods,
 } from "@ngrx/signals";
-import { SessionStorageService, type StorageProvider } from "./storage.service";
-import type { StorageSyncOptions } from "./storage-sync.types";
-import {
-	normalizeSyncConfigs,
-	readValueFromStorage,
-	writeValueToStorage,
-} from "./storage-sync.utils";
+import { withSessionStorage } from "./storage-sync.strategies";
+import type {
+	StorageSyncOptions,
+	SyncMethods,
+	SyncStorageStrategy,
+	SyncStoreForFactory,
+} from "./storage-sync.types";
+import { normalizeSyncConfigs } from "./storage-sync.utils";
 
 /**
  * A SignalStore feature that synchronizes the store state (or selected slices) with Session Storage or Local Storage.
@@ -23,99 +22,48 @@ import {
  * It features "Auto-Discovery" and supports handling multiple properties via an array of configurations.
  * It ensures that ONLY the specified properties are patched back on reload, preserving other initial values.
  *
- * @template State The state type of the store.
- * @param {StorageSyncOptions<State>} options The configuration parameters (single object or array).
- * @param {Type<StorageProvider>} [StorageServiceToken=SessionStorageService] The storage provider to use. Defaults to `SessionStorageService`.
- * @returns A SignalStore feature to inject into the store configuration.
+ * @template Input The incoming state footprint of the SignalStore.
+ * @param {StorageSyncOptions<Input["state"]>} options The configuration parameters (single object or array).
+ * @param {SyncStorageStrategy<Input["state"]>} [storageStrategy] Optional strategy to handle storage synchronization (defaults to SessionStorage).
+ * @returns A SignalStore feature injecting hydration and persistence methods.
  *
  * @example
  * ```typescript
  * withStorageSync([
  *   { key: "auth-user", select: (state) => state.user },
  *   { key: "auth-jwt", select: (state) => state.jwt }
- * ], LocalStorageService)
+ * ], withLocalStorage())
  * ```
  */
-export function withStorageSync<State extends object>(
-	options: StorageSyncOptions<State>,
-	StorageServiceToken: Type<StorageProvider> = SessionStorageService,
-) {
+export function withStorageSync<Input extends SignalStoreFeatureResult>(
+	options: StorageSyncOptions<Input["state"]>,
+	storageStrategy?: SyncStorageStrategy<Input["state"]>,
+): SignalStoreFeature<Input, EmptyFeatureResult & { methods: SyncMethods }> {
+	// 1. Determine the storage strategy factory
+	const factory = storageStrategy ?? withSessionStorage<Input["state"]>();
+
 	return signalStoreFeature(
-		{ state: type<State>() },
-
-		withMethods((store: WritableStateSource<State>) => {
+		withMethods((store) => {
 			const configs = normalizeSyncConfigs(options);
-			const storage = inject(StorageServiceToken);
 
-			return {
-				/**
-				 * Reads the values from the configured storage provider for all configurations
-				 * and patches the store with the combined result.
-				 */
-				readFromStorage: () => {
-					let combinedPatch: Partial<State> = {};
-
-					for (const config of configs) {
-						const {
-							key,
-							parse,
-							rehydrate: customRehydrate,
-							discoveredKey,
-						} = config;
-
-						const rawData = readValueFromStorage(storage, key, parse);
-						if (rawData === null) continue;
-
-						let patch: Partial<State> = {};
-
-						if (customRehydrate) {
-							patch = customRehydrate(rawData);
-						} else if (discoveredKey) {
-							// If we discovered a key (e.g. 'user'), we patch specifically that key
-							patch = { [discoveredKey]: rawData } as Partial<State>;
-						} else if (typeof rawData === "object" && rawData !== null) {
-							// Fallback: treat the stored data as a partial object
-							patch = rawData as Partial<State>;
-						} else {
-							// Final fallback: no mapping found
-							console.warn(
-								`[withStorageSync] Key '${key}' was retrieved but no mapping (discoveredKey or rehydrate) found to patch it.`,
-							);
-							continue;
-						}
-
-						combinedPatch = { ...combinedPatch, ...patch };
-					}
-
-					// Apply patches only if there is data to rehydrate
-					if (Object.keys(combinedPatch).length > 0) {
-						patchState(store, combinedPatch);
-					}
-				},
-
-				/**
-				 * Writes the current state's selected slices to the configured storage provider.
-				 */
-				writeToStorage: () => {
-					const state = getState(store);
-
-					for (const config of configs) {
-						const { key, select, stringify } = config;
-						const dataToSave = select(state);
-						writeValueToStorage(storage, key, dataToSave, stringify);
-					}
-				},
-			};
+			// 2. Delegate the strategy the responsibility of providing read/write operations
+			return factory(configs, store as SyncStoreForFactory<Input["state"]>);
 		}),
+		withHooks({
+			onInit(store) {
+				// We cast to SyncMethods because they were added by the previous feature wrapper
+				const syncMethods = store as SyncMethods;
 
-		withHooks((store) => ({
-			onInit: () => {
-				store.readFromStorage();
-				watchState(store, () => store.writeToStorage());
+				// A. Initial hydration: Read from storage and update the store
+				syncMethods.readFromStorage();
+
+				// B. Persistence: Watch for state changes and update the storage
+				watchState(store, () => syncMethods.writeToStorage());
 			},
-		})),
+		}),
 	);
 }
 
-// Re-export types if needed by the consumer
+// Re-export types and strategies for better consumer DX
+export * from "./storage-sync.strategies";
 export * from "./storage-sync.types";
