@@ -4,7 +4,6 @@ import {
 	withGlitchTracking,
 	// withStorageSync,
 } from "@angular-architects/ngrx-toolkit";
-import { User } from "@features/auth/domain/entities/user";
 import { tapResponse } from "@ngrx/operators";
 import {
 	getState,
@@ -20,8 +19,11 @@ import { withDevTools } from "@shared/stores/features";
 import { defer, map, pipe, switchMap, tap } from "rxjs";
 import { AuthFirebaseService } from "../https/auth.firebase";
 import { UserMapper } from "../mappers/user.mapper";
-import type { AuthState } from "../states/auth.state";
-import { withStorageSync } from "./features/with-storage-sync.feature";
+import {
+	withLocalStorage,
+	withSessionStorage,
+	withStorageSync,
+} from "./features/storage-sync/with-storage-sync";
 import { withInit } from "./init.feature";
 /**
  * The store for handling authentication state.
@@ -43,16 +45,23 @@ export const AuthStore = signalStore(
 	// 	select: (state: AuthState) => state.user,
 	// }),
 
-	withStorageSync([
-		{
-			key: "user",
-			select: (state) => state.user,
-		},
-		{
-			key: "loading",
-			select: (state) => state.isLoading,
-		},
-	]),
+	withStorageSync(
+		[
+			{
+				key: "user",
+				select: (state) => state.user,
+			},
+			// {
+			// 	key: "token",
+			// 	select: (state) => state.user?.accessToken,
+			// },
+			{
+				key: "loading",
+				select: (state) => state.isLoading,
+			},
+		],
+		withSessionStorage(),
+	),
 
 	// withStorageSync({
 	// 	key: "user",

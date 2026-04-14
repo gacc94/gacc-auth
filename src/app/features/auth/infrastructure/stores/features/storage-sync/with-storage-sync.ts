@@ -7,52 +7,52 @@ import {
 	withHooks,
 	withMethods,
 } from "@ngrx/signals";
-import { withSessionStorage } from "./storage-sync.strategies";
+
+import { withSessionStorage } from "./features/with-session-storage";
 import type {
 	StorageSyncOptions,
 	SyncMethods,
 	SyncStorageStrategy,
 	SyncStoreForFactory,
-} from "./storage-sync.types";
-import { normalizeSyncConfigs } from "./storage-sync.utils";
+} from "./internal/models";
+import { normalizeSyncConfigs } from "./internal/utils";
 
 /**
  * A SignalStore feature that synchronizes the store state (or selected slices) with Session Storage or Local Storage.
  *
  * It features "Auto-Discovery" and supports handling multiple properties via an array of configurations.
- * It ensures that ONLY the specified properties are patched back on reload, preserving other initial values.
+ * This implementation is explicitly designed for Browser environments where the DOM `window` object is guaranteed.
  *
  * @template Input The incoming state footprint of the SignalStore.
  * @param {StorageSyncOptions<Input["state"]>} options The configuration parameters (single object or array).
  * @param {SyncStorageStrategy<Input["state"]>} [storageStrategy] Optional strategy to handle storage synchronization (defaults to SessionStorage).
- * @returns A SignalStore feature injecting hydration and persistence methods.
- *
+ * @returns {SignalStoreFeature} A SignalStore feature injecting hydration and bidirectional persistence methods.
+ * 
  * @example
  * ```typescript
- * withStorageSync([
- *   { key: "auth-user", select: (state) => state.user },
- *   { key: "auth-jwt", select: (state) => state.jwt }
- * ], withLocalStorage())
+ * withStorageSync(
+ *   [{ key: 'user', select: state => state.user }],
+ *   withLocalStorage()
+ * )
  * ```
  */
 export function withStorageSync<Input extends SignalStoreFeatureResult>(
 	options: StorageSyncOptions<Input["state"]>,
 	storageStrategy?: SyncStorageStrategy<Input["state"]>,
 ): SignalStoreFeature<Input, EmptyFeatureResult & { methods: SyncMethods }> {
-	// 1. Determine the storage strategy factory
 	const factory = storageStrategy ?? withSessionStorage<Input["state"]>();
 
 	return signalStoreFeature(
 		withMethods((store) => {
 			const configs = normalizeSyncConfigs(options);
-
-			// 2. Delegate the strategy the responsibility of providing read/write operations
-			return factory(configs, store as SyncStoreForFactory<Input["state"]>);
+			return factory(
+				configs,
+				store as SyncStoreForFactory<Input["state"]>,
+			);
 		}),
 		withHooks({
 			onInit(store) {
-				// We cast to SyncMethods because they were added by the previous feature wrapper
-				const syncMethods = store as SyncMethods;
+				const syncMethods = store as unknown as SyncMethods;
 
 				// A. Initial hydration: Read from storage and update the store
 				syncMethods.readFromStorage();
@@ -64,6 +64,7 @@ export function withStorageSync<Input extends SignalStoreFeatureResult>(
 	);
 }
 
-// Re-export types and strategies for better consumer DX
-export * from "./storage-sync.strategies";
-export * from "./storage-sync.types";
+// Re-export strategies and models for better consumer DX
+export { withLocalStorage } from "./features/with-local-storage";
+export { withSessionStorage } from "./features/with-session-storage";
+export type * from "./internal/models";
