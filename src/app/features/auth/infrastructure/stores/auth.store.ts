@@ -1,67 +1,108 @@
-import { tapResponse } from '@ngrx/operators';
-import { inject } from '@angular/core';
-import { patchState, signalStore, withHooks, withMethods, withProps } from '@ngrx/signals';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { defer, map, pipe, switchMap, tap } from 'rxjs';
-import { AuthFirebaseService } from '../https/auth.firebase';
-import { UserMapper } from '../mappers/user.mapper';
-import { Router } from '@angular/router';
-import { withInit } from './features/init.feature';
-
+import { inject } from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import {
+	withGlitchTracking,
+	// withStorageSync,
+} from "@angular-architects/ngrx-toolkit";
+import { tapResponse } from "@ngrx/operators";
+import {
+	getState,
+	patchState,
+	signalStore,
+	withHooks,
+	withMethods,
+	withProps,
+} from "@ngrx/signals";
+import { rxMethod } from "@ngrx/signals/rxjs-interop";
+import { withDevTools, withReset } from "@shared/stores/features";
+import { StoreRegistryService } from "@shared/stores/store-registry.service";
+// import { withStorageSync } from "@shared/stores/features/storage-sync-no-server/with-storage-sync.feature";
+import { defer, map, pipe, switchMap, tap } from "rxjs";
+import { AuthFirebaseService } from "../https/auth.firebase";
+import { UserMapper } from "../mappers/user.mapper";
+import {
+	withLocalStorage,
+	withSessionStorage,
+	withStorageSync,
+} from "./features/storage-sync/with-storage-sync";
+import { withInit } from "./init.feature";
 /**
  * The store for handling authentication state.
  */
 export const AuthStore = signalStore(
-    // { providedIn: 'root' },
-    /**
-     * The initial state of the store.
-     */
-    withInit(),
+	{ providedIn: "root" },
 
-    /**
-     * Additional properties injected into the store.
-     */
-    withProps(() => ({
-        _auth: inject(AuthFirebaseService),
-        _router: inject(Router),
-    })),
+	/**
+	 * The initial state of the store.
+	 */
+	withInit(),
 
-    /**
-     * Additional methods for the store.
-     */
-    withMethods((store) => ({
-        /**
-         * Sign in with Google and update the store with the new user state.
-         * @returns An observable that completes when the sign in process is finished.
-         */
-        signIn: rxMethod<void>(
-            pipe(
-                tap(() => patchState(store, { isLoading: true, error: null })),
-                switchMap(() => {
-                    return defer(() => store._auth.signInWithGoogle()).pipe(
-                        map((user) => UserMapper.toUserState(user)),
-                        tapResponse({
-                            next: (user) => {
-                                patchState(store, { user, isLoading: false });
-                                store._router.navigate(['/']);
-                            },
-                            error: (error: Error) => {
-                                patchState(store, { isLoading: false, error });
-                            },
-                        }),
-                    );
-                }),
-            ),
-        ),
-    })),
+	withDevTools("AuthStore", withGlitchTracking()),
 
-    withHooks({
-        onInit: (store) => {
-            // store.signIn();
-        },
-        onDestroy: (store) => {
-            console.log('destroy');
-            // patchState(store, { user: null, isLoading: false, error: null });
-        },
-    }),
+	withStorageSync(
+		[
+			{
+				key: "user",
+				select: (state) => state.user,
+			},
+		],
+		withSessionStorage(),
+		{ autoClear: true },
+	),
+
+	/**
+	 * Additional properties injected into the store.
+	 */
+	withProps(() => ({
+		_auth: inject(AuthFirebaseService),
+		_router: inject(Router),
+		_activatedRoute: inject(ActivatedRoute),
+		_registry: inject(StoreRegistryService),
+	})),
+
+	/**
+	 * Additional methods for the store.
+	 */
+	withMethods((store) => ({
+		/**
+		 * Sign in with Google and update the store with the new user state.
+		 * @returns An observable that completes when the sign in process is finished.
+		 */
+		signIn: rxMethod<void>(
+			pipe(
+				tap(() => patchState(store, { isLoading: true, error: null })),
+				switchMap(() => {
+					return defer(() => store._auth.signInWithGoogle()).pipe(
+						map((user) => UserMapper.toUserState(user)),
+						tapResponse({
+							next: (user) => {
+								patchState(store, { user: { ...user }, isLoading: false });
+								store._router.navigate(["/dashboard"]);
+							},
+							error: (error: Error) => {
+								patchState(store, { isLoading: false, error });
+							},
+						}),
+					);
+				}),
+			),
+		),
+
+		signOut: () => {
+			// Reseteamos todas las stores registradas (incluyendo esta si tiene withReset)
+			store._registry.resetAll();
+			// Limpiamos storage si es necesario
+			store.clearStorage();
+			store._router.navigateByUrl("/auth");
+		},
+	})),
+
+	withHooks((store) => ({
+		onInit: async () => {
+			console.log("[AuthStore] Initialized", getState(store));
+		},
+		onDestroy: () => {
+			console.log("[AuthStore] Destroyed");
+		},
+	})),
 );

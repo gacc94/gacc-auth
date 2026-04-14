@@ -1,10 +1,21 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
+import {
+    ApplicationConfig,
+    importProvidersFrom,
+    provideBrowserGlobalErrorListeners,
+    provideEnvironmentInitializer,
+    provideZonelessChangeDetection,
+} from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { routes } from './app.routes';
 import { getApp, initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { FirebaseOptions } from '@angular/fire/app';
+import { storageProviders } from '@shared/storages/storage.provider';
+
+const environmentInitializer = provideEnvironmentInitializer(() => {
+    // const store = inject(AuthStore);
+});
 
 const firebaseConfig: FirebaseOptions = {
     projectId: 'auth-ngrx-signal',
@@ -19,6 +30,8 @@ const firebaseConfig: FirebaseOptions = {
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        environmentInitializer,
+        ...storageProviders,
         provideBrowserGlobalErrorListeners(),
         provideZonelessChangeDetection(),
         provideRouter(routes, withComponentInputBinding()),
