@@ -83,6 +83,8 @@ export type SyncMethods = {
 	removeFromStorage(): void;
 	/** Completely clears all data from the active storage provider. Use with extreme caution. */
 	clearStorage(): void;
+	/** Resets the values in the storage and the state to the initial values defined by the store. */
+	resetToStorage(): void;
 };
 
 /**

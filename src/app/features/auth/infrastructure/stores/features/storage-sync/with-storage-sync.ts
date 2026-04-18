@@ -24,11 +24,12 @@ import { normalizeSyncConfigs } from "./internal/utils";
  * It features "Auto-Discovery" and supports handling multiple properties via an array of configurations.
  * This implementation is explicitly designed for Browser environments where the DOM `window` object is guaranteed.
  *
- * The feature exposes **4 public methods** on the store:
+ * The feature exposes **5 public methods** on the store:
  * - `readFromStorage()` — Manually hydrates the store from storage.
  * - `writeToStorage()` — Manually persists all configured slices to storage.
  * - `removeFromStorage()` — Removes **only** the keys managed by this sync config from storage.
  * - `clearStorage()` — Clears the **entire** storage provider. Use with extreme caution.
+ * - `resetToStorage()` — Resets the storage and state values back to the store's initial defaults.
  *
  * @template Input The incoming state footprint of the SignalStore.
  * @param {StorageSyncOptions<Input["state"]>} options The configuration parameters (single object or array).
@@ -53,8 +54,7 @@ import { normalizeSyncConfigs } from "./internal/utils";
  *
  * // Manual cleanup from consuming store methods:
  * signOut() {
- *   patchState(store, initialState);
- *   store.removeFromStorage(); // Removes only the managed keys
+ *   store.resetToStorage(); // Resets both the state and synchronized storage to initial values
  * }
  * ```
  */

@@ -33,6 +33,11 @@ export function createStorageStrategy<State extends object>(
 		// Inject the requested native storage provider dynamically (e.g., LocalStorageService)
 		const storage = inject(StorageServiceToken);
 
+		// Capture the initial state synchronously at the time of feature creation
+		// before any hydration or state mutations occur.
+		const initialState = getState(store);
+		console.log({ initialState });
+
 		return {
 			/**
 			 * Reads data from storage resolving all configuration metadata.
@@ -100,6 +105,23 @@ export function createStorageStrategy<State extends object>(
 			 */
 			clearStorage(): void {
 				clearStorageProvider(storage);
+			},
+
+			/**
+			 * Resets the storage keys to their initial state values as defined by the store.
+			 * It also reverts the state in memory back to these initial defaults.
+			 */
+			resetToStorage(): void {
+				patchState(store, initialState as Partial<State>);
+				for (const config of configs) {
+					const { key, select, stringify } = config;
+					writeValueToStorage(
+						storage,
+						key,
+						select(initialState as State),
+						stringify,
+					);
+				}
 			},
 		};
 	};
