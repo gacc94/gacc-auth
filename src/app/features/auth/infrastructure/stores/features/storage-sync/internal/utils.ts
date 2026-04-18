@@ -160,3 +160,39 @@ export function clearStorageProvider(storage: StorageProvider): void {
 		console.error(`[withStorageSync] Failed to clear storage:`, error);
 	}
 }
+
+/**
+ * Resolves the appropriate state patch from raw storage data based on the configuration.
+ * Adheres to SRP (Single Responsibility Principle).
+ */
+export function resolveHydrationPatch<State extends object>(
+	config: NormalizedSyncConfig<State>,
+	rawData: unknown,
+): Partial<State> | null {
+	if (config.rehydrate) return config.rehydrate(rawData);
+	if (config.discoveredKey)
+		return { [config.discoveredKey]: rawData } as Partial<State>;
+	if (typeof rawData === "object" && rawData !== null)
+		return rawData as Partial<State>;
+
+	return null;
+}
+
+/**
+ * Iterates through configs and persists the requested slices into the storage provider.
+ * Follows DRY to be reused in standard writes and state resets.
+ */
+export function persistStateToStorage<State extends object>(
+	configs: NormalizedSyncConfig<State>[],
+	storage: StorageProvider,
+	state: State,
+): void {
+	for (const config of configs) {
+		writeValueToStorage(
+			storage,
+			config.key,
+			config.select(state),
+			config.stringify,
+		);
+	}
+}

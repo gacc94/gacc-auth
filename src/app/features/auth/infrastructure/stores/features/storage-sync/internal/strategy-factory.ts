@@ -9,9 +9,10 @@ import type {
 import type { StorageProvider } from "./storage.service";
 import {
 	clearStorageProvider,
+	persistStateToStorage,
 	readValueFromStorage,
 	removeValueFromStorage,
-	writeValueToStorage,
+	resolveHydrationPatch,
 } from "./utils";
 
 /**
@@ -36,42 +37,35 @@ export function createStorageStrategy<State extends object>(
 		// Capture the initial state synchronously at the time of feature creation
 		// before any hydration or state mutations occur.
 		const initialState = getState(store);
-		console.log({ initialState });
 
 		return {
 			/**
 			 * Reads data from storage resolving all configuration metadata.
-			 * Iterates over each config, decrypts/parses the raw value, maps it
-			 * to the adequate store property, and performs a single combined `patchState`
-			 * for maximum performance.
+			 * Extracts the hydration mapping into a pure functional reducer.
 			 */
 			readFromStorage(): void {
-				let combinedPatch: Partial<State> = {};
-				for (const config of configs) {
-					const {
-						key,
-						parse,
-						rehydrate: customRehydrate,
-						discoveredKey,
-					} = config;
-					const rawData = readValueFromStorage(storage, key, parse);
-					if (rawData === null) continue;
-
-					let patch: Partial<State> = {};
-					if (customRehydrate) {
-						patch = customRehydrate(rawData);
-					} else if (discoveredKey) {
-						patch = { [discoveredKey]: rawData } as Partial<State>;
-					} else if (typeof rawData === "object" && rawData !== null) {
-						patch = rawData as Partial<State>;
-					} else {
-						console.warn(
-							`[withStorageSync] Key '${key}' was retrieved but no routing mapping or rehydrate logic found.`,
+				const combinedPatch = configs.reduce(
+					(accumulated, config) => {
+						const rawData = readValueFromStorage(
+							storage,
+							config.key,
+							config.parse,
 						);
-						continue;
-					}
-					combinedPatch = { ...combinedPatch, ...patch };
-				}
+						if (rawData === null) return accumulated;
+
+						const patch = resolveHydrationPatch(config, rawData);
+						if (patch !== null) {
+							Object.assign(accumulated, patch);
+							return accumulated;
+						}
+
+						console.warn(
+							`[withStorageSync] Key '${config.key}' was retrieved but no routing mapping or rehydrate logic found.`,
+						);
+						return accumulated;
+					},
+					{} as Partial<State>,
+				);
 
 				if (Object.keys(combinedPatch).length > 0) {
 					patchState(store, combinedPatch);
@@ -80,15 +74,9 @@ export function createStorageStrategy<State extends object>(
 
 			/**
 			 * Persists the configured slices into storage.
-			 * Evaluates each configuration selector against the current comprehensive state,
-			 * stringifying it before pushing it strictly to the Storage Provider.
 			 */
 			writeToStorage(): void {
-				const state = getState(store);
-				for (const config of configs) {
-					const { key, select, stringify } = config;
-					writeValueToStorage(storage, key, select(state as State), stringify);
-				}
+				persistStateToStorage(configs, storage, getState(store) as State);
 			},
 
 			/**
@@ -113,15 +101,7 @@ export function createStorageStrategy<State extends object>(
 			 */
 			resetToStorage(): void {
 				patchState(store, initialState as Partial<State>);
-				for (const config of configs) {
-					const { key, select, stringify } = config;
-					writeValueToStorage(
-						storage,
-						key,
-						select(initialState as State),
-						stringify,
-					);
-				}
+				persistStateToStorage(configs, storage, initialState as State);
 			},
 		};
 	};
